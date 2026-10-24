@@ -11,7 +11,7 @@ failed=0
 
 cleanup() {
 	if [ -n "$device" ] && [ -e "$device/driver/unbind" ]; then
-		printf '%s' "${device##*-}" > "$device/driver/unbind" 2>/dev/null || true
+		printf '%s' "${device##*/}" > "$device/driver/unbind" 2>/dev/null || true
 	fi
 	rmmod ina219_demo 2>/dev/null || true
 	if [ -n "$bus" ]; then

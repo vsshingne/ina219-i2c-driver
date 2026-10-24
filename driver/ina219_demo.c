@@ -226,27 +226,37 @@ static int ina219_probe(struct i2c_client *client
 	u32 shunt = INA219_DEFAULT_SHUNT_UOHM;
 	int ret, value;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA))
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA)) {
+		dev_err(&client->dev, "adapter lacks SMBus word-data support\n");
 		return -EOPNOTSUPP;
+	}
 	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
+	if (!data) {
+		dev_err(&client->dev, "failed to allocate device state\n");
 		return -ENOMEM;
+	}
 	data->client = client;
 	data->current_lsb_ua = INA219_DEFAULT_CURRENT_LSB_UA;
 	ret = device_property_read_u32(&client->dev,
 				       "shunt-resistor-micro-ohms", &shunt);
-	if (ret && ret != -EINVAL && ret != -ENODATA)
+	if (ret && ret != -EINVAL && ret != -ENODATA) {
+		dev_err(&client->dev, "failed to read shunt property: %d\n", ret);
 		return ret;
-	if (shunt < INA219_MIN_SHUNT_UOHM || shunt > INA219_MAX_SHUNT_UOHM)
+	}
+	if (shunt < INA219_MIN_SHUNT_UOHM || shunt > INA219_MAX_SHUNT_UOHM) {
+		dev_err(&client->dev, "shunt value %u uOhm is out of range\n", shunt);
 		return -EINVAL;
+	}
 	data->shunt_uohm = shunt;
 	mutex_init(&data->lock);
 	i2c_set_clientdata(client, data);
 
 	ret = ina219_calculate_calibration(shunt, data->current_lsb_ua,
 					  &data->calibration);
-	if (ret)
+	if (ret) {
+		dev_err(&client->dev, "cannot calculate calibration: %d\n", ret);
 		return ret;
+	}
 	mutex_lock(&data->lock);
 	ret = ina219_write_reg(data, INA219_REG_CONFIG, INA219_CONFIG_RESET);
 	if (!ret)
