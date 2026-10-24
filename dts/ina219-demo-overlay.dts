@@ -1,0 +1,19 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&i2c1>;
+		__overlay__ {
+			status = "okay";
+
+			ina219@40 {
+				compatible = "custom,ina219-demo";
+				reg = <0x40>;
+				shunt-resistor-micro-ohms = <100000>;
+			};
+		};
+	};
+};
